@@ -25,6 +25,8 @@ import java.util.Map;
 public class ValidationItemControllerV2 {
 
     private final ItemRepository itemRepository;
+    private final ItemValidator itemValidator;
+
 
     @GetMapping
     public String items(Model model) {
@@ -156,7 +158,7 @@ public class ValidationItemControllerV2 {
         return "redirect:/validation/v2/items/{itemId}";
     }
 
-    @PostMapping("/add")
+    //  @PostMapping("/add")
     public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
         Item savedItem = itemRepository.save(item);
 
@@ -167,7 +169,7 @@ public class ValidationItemControllerV2 {
 //        }
 
         //검증 로직 밑에 꺼와 같음
- //       ValidationUtils.rejectIfEmptyOrWhitespace(bindingResult, "ItemName", "required");
+        //       ValidationUtils.rejectIfEmptyOrWhitespace(bindingResult, "ItemName", "required");
 
         //검증 로직
         if (!StringUtils.hasText(item.getItemName())) {
@@ -199,6 +201,21 @@ public class ValidationItemControllerV2 {
         return "redirect:/validation/v2/items/{itemId}";
     }
 
+    @PostMapping("/add")
+    public String addItemV5(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
+
+        itemValidator.validate(item, bindingResult);
+
+        //검증에 실패하면 다시 입력 폼으로
+        if (bindingResult.hasErrors()) {
+            log.info("errors = {}", bindingResult);
+            return "validation/v2/addForm";
+        }
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId()); //치환
+        redirectAttributes.addAttribute("status", true); // 나머지는 쿼리파라미터로 넘어간다
+        return "redirect:/validation/v2/items/{itemId}";
+    }
 
     //성공로직
     @GetMapping("/{itemId}/edit")
